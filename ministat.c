@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "queue.h"
 
@@ -127,6 +128,9 @@ double student [NSTUDENT + 1][NCONF] = {
 
 #define	MAX_DS	8
 static char symbol[MAX_DS] = { ' ', 'x', '+', '*', '%', '#', '@', 'O' };
+
+struct timespec start, end;
+static unsigned long long int time[2];
 
 struct dataset {
 	char *name;
@@ -447,7 +451,9 @@ dbl_cmp(const void *a, const void *b)
 static struct dataset *
 ReadSet(const char *n, int column, const char *delim)
 {
-	FILE *f;
+	// clock_gettime(CLOCK_MONOTONIC, &start);
+
+	int f;
 	char buf[BUFSIZ], *p, *t;
 	struct dataset *s;
 	double d;
@@ -455,13 +461,13 @@ ReadSet(const char *n, int column, const char *delim)
 	int i;
 
 	if (n == NULL) {
-		f = stdin;
+		f = STDIN_FILENO;
 		n = "<stdin>";
 	} else if (!strcmp(n, "-")) {
-		f = stdin;
+		f = STDIN_FILENO;
 		n = "<stdin>";
 	} else {
-		f = fopen(n, "r");
+		f = open(n, "r");
 	}
 	if (f == NULL)
 		err(1, "Cannot open %s", n);
@@ -489,13 +495,14 @@ ReadSet(const char *n, int column, const char *delim)
 		if (*buf != '\0')
 			AddPoint(s, d);
 	}
-	fclose(f);
+	close(f);
 	if (s->n < 3) {
 		fprintf(stderr,
 		    "Dataset %s must contain at least 3 data points\n", n);
 		exit (2);
 	}
 	qsort(s->points, s->n, sizeof *s->points, dbl_cmp);
+	// time[1] = (end.tv_sec - start_tv_sec) + (end.tv_nsec - start.tv_nsec) / 1000000000;
 	return (s);
 }
 
