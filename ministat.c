@@ -17,6 +17,11 @@
 #include <unistd.h>
 #include <time.h>
 
+#define AN_QSORT_SUFFIX doubles
+#define AN_QSORT_TYPE double
+#define AN_QSORT_CMP dbl_cmp
+
+#include "an_qsort.inc"
 #include "queue.h"
 
 #define NSTUDENT 100
@@ -154,14 +159,9 @@ NewSet(void)
 static void
 AddPoint(struct dataset *ds, double a)
 {
-	double *dp;
-
 	if (ds->n >= ds->lpoints) {
-		dp = ds->points;
 		ds->lpoints *= 4;
-		ds->points = calloc(sizeof *ds->points, ds->lpoints);
-		memcpy(ds->points, dp, sizeof *dp * ds->n);
-		free(dp);
+		ds->points = realloc(ds->points, sizeof *ds->points * ds->lpoints);
 	}
 	ds->points[ds->n++] = a;
 	ds->sy += a;
@@ -501,11 +501,9 @@ ReadSet(const char *n, int column, const char *delim)
 		    "Dataset %s must contain at least 3 data points\n", n);
 		exit (2);
 	}
-	qsort(s->points, s->n, sizeof *s->points, dbl_cmp);
-	// clock_gettime(CLOCK_MONOTONIC, &end);
-	
-	// time[1] = (end.tv_sec - start_tv_sec) + (end.tv_nsec - start.tv_nsec) / 1000000000;
-	
+	// qsort(s->points, s->n, sizeof *s->points, dbl_cmp);
+	// using an_qsort_doubles to replace the old qsort final merge
+	an_qsort_double(s->points, s->n, sizeof *s->points, dbl_cmp);
 	return (s);
 }
 
