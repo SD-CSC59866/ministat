@@ -18,6 +18,10 @@
 
 #include "queue.h"
 
+//ehusain: for timing data
+#include <time.h>
+
+
 #define NSTUDENT 100
 #define NCONF 6
 double const studentpct[] = { 80, 90, 95, 98, 99, 99.5 };
@@ -128,6 +132,10 @@ double student [NSTUDENT + 1][NCONF] = {
 #define	MAX_DS	8
 static char symbol[MAX_DS] = { ' ', 'x', '+', '*', '%', '#', '@', 'O' };
 
+static unsigned long long int ti[2];
+//ehusain: timespec start and stop
+struct timespec start, stop;
+
 struct dataset {
 	char *name;
 	double	*points;
@@ -223,6 +231,13 @@ Vitals(struct dataset *ds, int flag)
 }
 
 static void
+PrintTime(void)
+{
+	printf("Timing Performance 		AddPoint 	ReadSet		 	\n");
+	printf("Today:              %llu            %llu\n", ti[0], ti[1]);
+}
+
+static void
 Relative(struct dataset *ds, struct dataset *rs, int confidx)
 {
 	double spool, s, d, e, t;
@@ -241,7 +256,6 @@ Relative(struct dataset *ds, struct dataset *rs, int confidx)
 	e = t * s;
 
 	if (fabs(d) > e) {
-	
 		printf("Difference at %.1f%% confidence\n", studentpct[confidx]);
 		printf("	%g +/- %g\n", d, e);
 		printf("	%g%% +/- %g%%\n", d * 100 / Avg(rs), e * 100 / Avg(rs));
@@ -333,7 +347,7 @@ PlotSet(struct dataset *ds, int val)
 		pl->bar[bar] = malloc(pl->width);
 		memset(pl->bar[bar], 0, pl->width);
 	}
-	
+
 	m = 1;
 	i = -1;
 	j = 0;
@@ -444,11 +458,22 @@ dbl_cmp(const void *a, const void *b)
 		return (0);
 }
 
+#define AN_QSORT_SUFFIX doubles
+#define AN_QSORT_TYPE double
+#define AN_QSORT_CMP dbl_cmp
+
+#include "an_qsort.inc"
+
+
 static struct dataset *
 ReadSet(const char *n, int column, const char *delim)
 {
+	//ehusain:start time
+	clock_gettime(CLOCK_MONOTONIC, &start);
 	FILE *f;
-	char buf[BUFSIZ], *p, *t;
+	//char buf[BUFSIZ], *p, *t;
+
+	char buf[BUFSIZ], *t;
 	struct dataset *s;
 	double d;
 	int line;
@@ -474,20 +499,35 @@ ReadSet(const char *n, int column, const char *delim)
 		i = strlen(buf);
 		if (buf[i-1] == '\n')
 			buf[i-1] = '\0';
-		for (i = 1, t = strtok(buf, delim);
+
+		char *ptr = strdup(buf); // copy string in buffer to pointer
+		char *ptr1 = ptr;        // copy of ptr because strsep modifies it
+		for (i = 1, t = strsep(&ptr1, delim);
 		     t != NULL && *t != '#';
-		     i++, t = strtok(NULL, delim)) {
+		     i++, t = strsep(&ptr1, delim)) {
 			if (i == column)
 				break;
 		}
-		if (t == NULL || *t == '#')
-			continue;
 
-		d = strtod(t, &p);
-		if (p != NULL && *p != '\0')
-			err(2, "Invalid data on line %d in %s\n", line, n);
+		if (t == NULL || *t == '#'){
+			//free ptr
+                	free(ptr);
+			continue;
+		}
+
+		//d = strtod(t, &p);
+		//strtod alternative
+
+		d = atof(t);
+
+		/* if (p != NULL && *p != '\0')
+			err(2, "Invalid data on line %d in %s\n", line, n); */
+
 		if (*buf != '\0')
 			AddPoint(s, d);
+
+		//free ptr
+		free(ptr);
 	}
 	fclose(f);
 	if (s->n < 3) {
@@ -495,7 +535,15 @@ ReadSet(const char *n, int column, const char *delim)
 		    "Dataset %s must contain at least 3 data points\n", n);
 		exit (2);
 	}
-	qsort(s->points, s->n, sizeof *s->points, dbl_cmp);
+
+	//qsort(s->points, s->n, sizeof *s->points, dbl_cmp);
+	an_qsort_doubles(s->points, s->n);
+
+	clock_gettime(CLOCK_MONOTONIC, &stop);
+	//ehusain:stop time
+
+	ti[1] = 1000000000 * (stop.tv_sec - start.tv_sec) + stop.tv_nsec-start.tv_nsec;
+
 	return (s);
 }
 
@@ -506,7 +554,7 @@ usage(char const *whine)
 
 	fprintf(stderr, "%s\n", whine);
 	fprintf(stderr,
-	    "Usage: ministat [-C column] [-c confidence] [-d delimiter(s)] [-ns] [-w width] [file [file ...]]\n");
+	    "Usage: ministat [-C column] [-c confidence] [-d delimiter(s)] [-ns] [-v] [-w width] [file [file ...]]\n");
 	fprintf(stderr, "\tconfidence = {");
 	for (i = 0; i < NCONF; i++) {
 		fprintf(stderr, "%s%g%%",
@@ -520,6 +568,7 @@ usage(char const *whine)
 	fprintf(stderr, "\t-q : print summary statistics and test only, no graph\n");
 	fprintf(stderr, "\t-s : print avg/median/stddev bars on separate lines\n");
 	fprintf(stderr, "\t-w : width of graph/test output (default 74 or terminal width)\n");
+	fprintf(stderr, "\t-v: 	emits verbose timing data\n");
 	exit (2);
 }
 
@@ -536,6 +585,10 @@ main(int argc, char **argv)
 	int flag_s = 0;
 	int flag_n = 0;
 	int flag_q = 0;
+
+	/* new option “-v” that emits verbose timing data */
+        int flag_v = 0;
+
 	int termwidth = 74;
 
 	if (isatty(STDOUT_FILENO)) {
@@ -549,7 +602,8 @@ main(int argc, char **argv)
 	}
 
 	ci = -1;
-	while ((c = getopt(argc, argv, "C:c:d:snqw:")) != -1)
+	//added v in gettop
+	while ((c = getopt(argc, argv, "C:c:d:snqw:v:")) != -1)
 		switch (c) {
 		case 'C':
 			column = strtol(optarg, &p, 10);
@@ -559,7 +613,10 @@ main(int argc, char **argv)
 				usage("Column number should be positive.");
 			break;
 		case 'c':
-			a = strtod(optarg, &p);
+			//a = strtod(optarg, &p);
+			// strtod alternative
+			a = atof(optarg);
+
 			if (p != NULL && *p != '\0')
 				usage("Not a floating point number");
 			for (i = 0; i < NCONF; i++)
@@ -582,6 +639,7 @@ main(int argc, char **argv)
 		case 's':
 			flag_s = 1;
 			break;
+
 		case 'w':
 			termwidth = strtol(optarg, &p, 10);
 			if (p != NULL && *p != '\0')
@@ -589,6 +647,14 @@ main(int argc, char **argv)
 			if (termwidth < 0)
 				usage("Unable to move beyond left margin.");
 			break;
+
+		/* new option “-v” that emits verbose timing data */
+		case 'v':
+			if (*optarg != '\0')
+				usage("No option argument required.");
+			flag_v = 1;
+			break;
+
 		default:
 			usage("Unknown option");
 			break;
@@ -626,6 +692,11 @@ main(int argc, char **argv)
 		Vitals(ds[i], i + 1);
 		if (!flag_n)
 			Relative(ds[i], ds[0], ci);
+	}
+
+
+	if (flag_v){
+		PrintTime();
 	}
 	exit(0);
 }
