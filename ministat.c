@@ -502,7 +502,10 @@ ReadSet(const char *n, int column, const char *delim)
 		exit (2);
 	}
 	qsort(s->points, s->n, sizeof *s->points, dbl_cmp);
+	// clock_gettime(CLOCK_MONOTONIC, &end);
+	
 	// time[1] = (end.tv_sec - start_tv_sec) + (end.tv_nsec - start.tv_nsec) / 1000000000;
+	
 	return (s);
 }
 
