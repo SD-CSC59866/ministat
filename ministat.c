@@ -133,7 +133,7 @@ double student [NSTUDENT + 1][NCONF] = {
 #define	MAX_DS	8
 static char symbol[MAX_DS] = { ' ', 'x', '+', '*', '%', '#', '@', 'O' };
 
-static unsigned long long int ti[2];
+static unsigned long long int tp[2];
 //ehusain: timespec start and stop
 struct timespec start, stop;
 
@@ -159,19 +159,23 @@ NewSet(void)
 static void
 AddPoint(struct dataset *ds, double a)
 {
-	double *dp;
-
-	if (ds->n >= ds->lpoints)
-	{
-		dp = ds->points;
+	double *temp;
+	if (ds->n >= ds->lpoints) {
 		ds->lpoints *= 4;
-		ds->points = calloc(sizeof *ds->points, ds->lpoints);
-		memcpy(ds->points, dp, sizeof *dp * ds->n);
-		free(dp);
+		clock_gettime(CLOCK_MONOTONIC, &start);
+		temp = realloc(ds->points, (ds->lpoints * sizeof *ds->points));
+		if (temp == NULL) {
+			printf("Realloc failed in AddPoint. Exiting...\n");
+			exit(0);
+		} else {
+			ds->points = temp;
+		}
 	}
+	clock_gettime(CLOCK_MONOTONIC, &stop);
+	tp[0] = 1000000000 * (stop.tv_sec - start.tv_sec) + stop.tv_nsec-start.tv_nsec;
 	ds->points[ds->n++] = a;
 	ds->sy += a;
-	ds->syy += a * a;
+	ds->syy += a * a;	
 }
 
 static double
@@ -236,7 +240,7 @@ static void
 PrintTime(void)
 {
 	printf("Timing Performance 		AddPoint 	ReadSet		 	\n");
-	printf("Today:              %llu            %llu\n", ti[0], ti[1]);
+	printf("Today:              %llu            %llu\n", tp[0], tp[1]);
 }
 
 static void
@@ -575,7 +579,7 @@ ReadSet(const char *n, int column, const char *delim)
 	clock_gettime(CLOCK_MONOTONIC, &stop);
 	//ehusain:stop time
 
-	ti[1] = 1000000000 * (stop.tv_sec - start.tv_sec) + stop.tv_nsec-start.tv_nsec;
+	tp[1] = 1000000000 * (stop.tv_sec - start.tv_sec) + stop.tv_nsec-start.tv_nsec;
 
 	return (s);
 }
@@ -588,13 +592,11 @@ usage(char const *whine)
 	fprintf(stderr, "%s\n", whine);
 	fprintf(stderr,
 	    "Usage: ministat [-C column] [-c confidence] [-d delimiter(s)] [-ns] [-v] [-w width] [file [file ...]]\n");
-
 	fprintf(stderr, "\tconfidence = {");
-	for (i = 0; i < NCONF; i++)
-	{
+	for (i = 0; i < NCONF; i++) {
 		fprintf(stderr, "%s%g%%",
-				i ? ", " : "",
-				studentpct[i]);
+		    i ? ", " : "",
+		    studentpct[i]);
 	}
 	fprintf(stderr, "}\n");
 	fprintf(stderr, "\t-C : column number to extract (starts and defaults to 1)\n");
@@ -607,7 +609,8 @@ usage(char const *whine)
 	exit (2);
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
 	struct dataset *ds[7];
 	int nds;
@@ -625,19 +628,17 @@ int main(int argc, char **argv)
 
 	int termwidth = 74;
 
-	if (isatty(STDOUT_FILENO))
-	{
+	if (isatty(STDOUT_FILENO)) {
 		struct winsize wsz;
 
 		if ((p = getenv("COLUMNS")) != NULL && *p != '\0')
 			termwidth = atoi(p);
 		else if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &wsz) != -1 &&
-				 wsz.ws_col > 0)
+			 wsz.ws_col > 0)
 			termwidth = wsz.ws_col - 2;
 	}
 
 	ci = -1;
-
 	//added v in gettop
 	while ((c = getopt(argc, argv, "C:c:d:snqw:v:")) != -1)
 		switch (c) {
@@ -700,13 +701,10 @@ int main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 0)
-	{
+	if (argc == 0) {
 		ds[0] = ReadSet("-", column, delim);
 		nds = 1;
-	}
-	else
-	{
+	} else {
 		if (argc > (MAX_DS - 1))
 			usage("Too many datasets.");
 		nds = argc;
@@ -714,11 +712,10 @@ int main(int argc, char **argv)
 			ds[i] = ReadSet(argv[i], column, delim);
 	}
 
-	for (i = 0; i < nds; i++)
-		printf("%c %s\n", symbol[i + 1], ds[i]->name);
+	for (i = 0; i < nds; i++) 
+		printf("%c %s\n", symbol[i+1], ds[i]->name);
 
-	if (!flag_n && !flag_q)
-	{
+	if (!flag_n && !flag_q) {
 		SetupPlot(termwidth, flag_s, nds);
 		for (i = 0; i < nds; i++)
 			DimPlot(ds[i]);
@@ -728,8 +725,7 @@ int main(int argc, char **argv)
 	}
 	VitalsHead();
 	Vitals(ds[0], 1);
-	for (i = 1; i < nds; i++)
-	{
+	for (i = 1; i < nds; i++) {
 		Vitals(ds[i], i + 1);
 		if (!flag_n)
 			Relative(ds[i], ds[0], ci);
