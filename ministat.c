@@ -133,7 +133,8 @@ double student [NSTUDENT + 1][NCONF] = {
 #define	MAX_DS	8
 static char symbol[MAX_DS] = { ' ', 'x', '+', '*', '%', '#', '@', 'O' };
 
-static unsigned long long int ti[2];
+
+static unsigned long long int accum[2];
 //ehusain: timespec start and stop
 struct timespec start, stop;
 
@@ -159,19 +160,24 @@ NewSet(void)
 static void
 AddPoint(struct dataset *ds, double a)
 {
-	double *dp;
+	double *temp;
+	if (ds->n >= ds->lpoints) {
 
-	if (ds->n >= ds->lpoints)
-	{
-		dp = ds->points;
 		ds->lpoints *= 4;
-		ds->points = calloc(sizeof *ds->points, ds->lpoints);
-		memcpy(ds->points, dp, sizeof *dp * ds->n);
-		free(dp);
+		clock_gettime(CLOCK_MONOTONIC, &start);
+		temp = realloc(ds->points, (ds->lpoints * sizeof *ds->points));
+		if (temp == NULL) {
+			printf("Realloc failed in AddPoint. Exiting...\n");
+			exit(0);
+		} else {
+			ds->points = temp;
+		}
 	}
+	clock_gettime(CLOCK_MONOTONIC, &stop);
+	accum[0] = 1000000000 * (stop.tv_sec - start.tv_sec) + stop.tv_nsec-start.tv_nsec;
 	ds->points[ds->n++] = a;
 	ds->sy += a;
-	ds->syy += a * a;
+	ds->syy += a * a;	
 }
 
 static double
@@ -236,7 +242,7 @@ static void
 PrintTime(void)
 {
 	printf("Timing Performance 		AddPoint 	ReadSet		 	\n");
-	printf("Today:              %llu            %llu\n", ti[0], ti[1]);
+	printf("Today:              %llu            %llu\n", accum[0], accum[1]);
 }
 
 static void
@@ -493,7 +499,9 @@ ReadSet(const char *n, int column, const char *delim)
 	//ehusain:start time
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	FILE *f;
-	char buf[BUFSIZ], *p, *t;
+	//char buf[BUFSIZ], *p, *t;
+	
+	char buf[BUFSIZ], *t;
 	struct dataset *s;
 	double d;
 	int line;
@@ -527,15 +535,31 @@ ReadSet(const char *n, int column, const char *delim)
 		if (buf[i-1] == '\n')
 			buf[i-1] = '\0';
 
-       		 char *ptr = strdup(buf);//duplicate of pointed to by buf
+    char *ptr = strdup(buf);//duplicate of pointed to by buf
 		char *ptr_copy = ptr;  //copy ptr, let strsep work on  prt_copy
-		for (i = 1, t = strsep(&ptr_copy, delim);
+		
+    for (i = 1, t = strsep(&ptr_copy, delim);
 		     t != NULL && *t != '#';
 		     i++, t = strsep(&ptr_copy, delim)) {
 			if (i == column)
 				break;
 		}
 		if (t == NULL || *t == '#'){
+			//free ptr
+      free(ptr);
+			continue;
+		}
+
+		//d = strtod(t, &p);
+		d = atof(t);
+		/*
+		if (p != NULL && *p != '\0'){
+			err(2, "Invalid data on line %d in %s\n", line, n);
+        }
+		 */ 
+		if (*buf != '\0'){
+			AddPoint(s, d);
+
 			continue;}
 
 		d = strtod(t, &p);
@@ -545,7 +569,6 @@ ReadSet(const char *n, int column, const char *delim)
                         }
 		if (*buf != '\0'){
 			AddPoint(s, d);
-			
 			}
 	 free(ptr);//strdup(ptr) is done dynamically using malloc, need free();
 	}
@@ -564,7 +587,7 @@ ReadSet(const char *n, int column, const char *delim)
 	clock_gettime(CLOCK_MONOTONIC, &stop);
 	//ehusain:stop time
 
-	ti[1] = 1000000000 * (stop.tv_sec - start.tv_sec) + stop.tv_nsec-start.tv_nsec;
+	accum[1] = 1000000000 * (stop.tv_sec - start.tv_sec) + stop.tv_nsec-start.tv_nsec;
 
 	return (s);
 }
@@ -610,7 +633,7 @@ int main(int argc, char **argv)
 	int flag_q = 0;
 
 	/* new option “-v” that emits verbose timing data */
-        int flag_v = 0;
+    int flag_v = 0;
 
 	int termwidth = 74;
 
