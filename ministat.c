@@ -560,16 +560,9 @@ ReadSet(const char *n, int column, const char *delim)
 		if (*buf != '\0'){
 			AddPoint(s, d);
 
-			continue;}
+			continue;
+		}
 
-		d = strtod(t, &p);
-		if (p != NULL && *p != '\0'){
-			err(2, "Invalid data on line %d in %s\n", line, n);
-                        
-                        }
-		if (*buf != '\0'){
-			AddPoint(s, d);
-			}
 	 free(ptr);//strdup(ptr) is done dynamically using malloc, need free();
 	}
 
