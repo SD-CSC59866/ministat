@@ -493,9 +493,7 @@ ReadSet(const char *n, int column, const char *delim)
 	//ehusain:start time
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	FILE *f;
-	//char buf[BUFSIZ], *p, *t;
-
-	char buf[BUFSIZ], *t;
+	char buf[BUFSIZ], *p, *t;
 	struct dataset *s;
 	double d;
 	int line;
@@ -521,44 +519,35 @@ ReadSet(const char *n, int column, const char *delim)
 	s->name = strdup(n);
 	line = 0;
 
-	while (fgets(buf, BUFSIZ, f) != NULL)
-	{
+	while (fgets(buf, BUFSIZ, f) != NULL) {
 		line++;
-		i = strlen(buf);
 
+		i = strlen(buf);
+	        
 		if (buf[i-1] == '\n')
 			buf[i-1] = '\0';
 
-		char *ptr = strdup(buf); // copy string in buffer to pointer
-		char *ptr1 = ptr;        // copy of ptr because strsep modifies it
-		for (i = 1, t = strsep(&ptr1, delim);
+       		 char *ptr = strdup(buf);//duplicate of pointed to by buf
+		char *ptr_copy = ptr;  //copy ptr, let strsep work on  prt_copy
+		for (i = 1, t = strsep(&ptr_copy, delim);
 		     t != NULL && *t != '#';
-		     i++, t = strsep(&ptr1, delim)) {
+		     i++, t = strsep(&ptr_copy, delim)) {
 			if (i == column)
 				break;
 		}
-
 		if (t == NULL || *t == '#'){
-			//free ptr
-                	free(ptr);
-			continue;
-		}
+			continue;}
 
-		//d = strtod(t, &p);
-		//strtod alternative
-
-		d = atof(t);
-
-		/* if (p != NULL && *p != '\0')
-			err(2, "Invalid data on line %d in %s\n", line, n); */
-    
-		if (*buf != '\0')
-		{
+		d = strtod(t, &p);
+		if (p != NULL && *p != '\0'){
+			err(2, "Invalid data on line %d in %s\n", line, n);
+                        
+                        }
+		if (*buf != '\0'){
 			AddPoint(s, d);
-
-		//free ptr
-		free(ptr);
-
+			
+			}
+	 free(ptr);//strdup(ptr) is done dynamically using malloc, need free();
 	}
 
 	fclose(f);
