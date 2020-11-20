@@ -134,8 +134,6 @@ double student [NSTUDENT + 1][NCONF] = {
 static char symbol[MAX_DS] = { ' ', 'x', '+', '*', '%', '#', '@', 'O' };
 
 
-
-
 static unsigned long long int accum[2];
 //ehusain: timespec start and stop
 struct timespec start, stop;
@@ -537,9 +535,10 @@ ReadSet(const char *n, int column, const char *delim)
 		if (buf[i-1] == '\n')
 			buf[i-1] = '\0';
 
-       		 char *ptr = strdup(buf);//duplicate of pointed to by buf
+    char *ptr = strdup(buf);//duplicate of pointed to by buf
 		char *ptr_copy = ptr;  //copy ptr, let strsep work on  prt_copy
-		for (i = 1, t = strsep(&ptr_copy, delim);
+		
+    for (i = 1, t = strsep(&ptr_copy, delim);
 		     t != NULL && *t != '#';
 		     i++, t = strsep(&ptr_copy, delim)) {
 			if (i == column)
@@ -547,7 +546,7 @@ ReadSet(const char *n, int column, const char *delim)
 		}
 		if (t == NULL || *t == '#'){
 			//free ptr
-            free(ptr);
+      free(ptr);
 			continue;
 		}
 
@@ -558,6 +557,16 @@ ReadSet(const char *n, int column, const char *delim)
 			err(2, "Invalid data on line %d in %s\n", line, n);
         }
 		 */ 
+		if (*buf != '\0'){
+			AddPoint(s, d);
+
+			continue;}
+
+		d = strtod(t, &p);
+		if (p != NULL && *p != '\0'){
+			err(2, "Invalid data on line %d in %s\n", line, n);
+                        
+                        }
 		if (*buf != '\0'){
 			AddPoint(s, d);
 			}
