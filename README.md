@@ -1,3 +1,13 @@
+# Group B
+
+Team Members: 
+Eftekher Husain
+Jeffrey Lei
+Jessica Chu
+Jiande Li
+
+
+
 # ministat
 A small tool to do the statistics legwork on benchmarks etc.
 
