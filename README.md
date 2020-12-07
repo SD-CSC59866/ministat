@@ -1,10 +1,10 @@
 # Group B
 
-Team Members: 
-Eftekher Husain
-Jeffrey Lei
-Jessica Chu
-Jiande Li
+## Team Members: 
+Eftekher Husain, 
+Jeffrey Lei, 
+Jessica Chu, 
+Jiande Li, 
 
 
 
