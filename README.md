@@ -15,7 +15,7 @@ Written by Poul-Henning Kamp, lured into a dark Linux alley and clubbed over the
 
 ## Perf
 ### Flamegraph
-
+![Flamegraph](perf-ministat.svg)
 
 ## Build & Install
 
