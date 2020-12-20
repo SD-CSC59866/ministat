@@ -38,7 +38,7 @@ Optimize ministat to take advantage of modern CPU features and compiler optimiza
 
 	$ ./ministat/FlameGraph/flamegraph.pl out.perf-folded > perf-ministat.svg
 
-![](perf-ministat.svg)
+![](Images/perf-ministat-before.svg)
 
 
 ### Perf Report before optimizations
@@ -46,19 +46,8 @@ Optimize ministat to take advantage of modern CPU features and compiler optimiza
 	$ perf report --input=./perf.data -f
 
 
-![](perf-report.png)
+![](Images/perf-report-before.png)
 
-### Flamegraph after optimizations
-
-![](perf-ministat.svg)
-
-
-### Perf Report after optimizations
-
-	$ perf report --input=./perf.data -f
-
-
-![](perf-report.png)
 
 ### Performance after Optimization
 
@@ -76,6 +65,19 @@ Optimize ministat to take advantage of modern CPU features and compiler optimiza
 		90135.7 +/- 7977.54
 		118.371% +/- 10.4766%
 		(Student's t, pooled s = 1.21051e+07)
+
+### Flamegraph after optimizations
+
+![]()
+
+
+### Perf Report after optimizations
+
+	$ perf report --input=./perf.data -f
+
+
+![]()
+
 
 
 ### Steps we have taken in order to Optimize ministat
