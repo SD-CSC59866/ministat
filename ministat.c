@@ -1,3 +1,5 @@
+
+
 /*
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
@@ -17,12 +19,13 @@
 #include <unistd.h>
 #include <time.h>
 
+#include "queue.h"
+
 #define AN_QSORT_SUFFIX doubles
 #define AN_QSORT_TYPE double
 #define AN_QSORT_CMP dbl_cmp
 
 #include "an_qsort.inc"
-#include "queue.h"
 
 #define NSTUDENT 100
 #define NCONF 6
@@ -134,8 +137,7 @@ double student [NSTUDENT + 1][NCONF] = {
 #define	MAX_DS	8
 static char symbol[MAX_DS] = { ' ', 'x', '+', '*', '%', '#', '@', 'O' };
 
-struct timespec start, end;
-static unsigned long long int time[2];
+struct timespec start, stop;
 
 struct dataset {
 	char *name;
@@ -159,10 +161,16 @@ NewSet(void)
 static void
 AddPoint(struct dataset *ds, double a)
 {
+	clock_gettime(CLOCK_MONOTONIC, &start);
+
 	if (ds->n >= ds->lpoints) {
 		ds->lpoints *= 4;
 		ds->points = realloc(ds->points, sizeof *ds->points * ds->lpoints);
 	}
+
+	clock_gettime(CLOCK_MONOTONIC, &stop);
+	fprintf(stderr, "done (%llu microseconds)\n", elapsed_us(&start, &stop));
+	
 	ds->points[ds->n++] = a;
 	ds->sy += a;
 	ds->syy += a * a;
@@ -451,9 +459,7 @@ dbl_cmp(const void *a, const void *b)
 static struct dataset *
 ReadSet(const char *n, int column, const char *delim)
 {
-	// clock_gettime(CLOCK_MONOTONIC, &start);
-
-	int f;
+	FILE *f;
 	char buf[BUFSIZ], *p, *t;
 	struct dataset *s;
 	double d;
@@ -461,13 +467,13 @@ ReadSet(const char *n, int column, const char *delim)
 	int i;
 
 	if (n == NULL) {
-		f = STDIN_FILENO;
+		f = stdin;
 		n = "<stdin>";
 	} else if (!strcmp(n, "-")) {
-		f = STDIN_FILENO;
+		f = stdin;
 		n = "<stdin>";
 	} else {
-		f = open(n, "r");
+		f = fopen(n, "r");
 	}
 	if (f == NULL)
 		err(1, "Cannot open %s", n);
@@ -495,15 +501,17 @@ ReadSet(const char *n, int column, const char *delim)
 		if (*buf != '\0')
 			AddPoint(s, d);
 	}
-	close(f);
+	fclose(f);
 	if (s->n < 3) {
 		fprintf(stderr,
 		    "Dataset %s must contain at least 3 data points\n", n);
 		exit (2);
 	}
+
 	// qsort(s->points, s->n, sizeof *s->points, dbl_cmp);
-	// using an_qsort_doubles to replace the old qsort final merge
-	an_qsort_double(s->points, s->n, sizeof *s->points, dbl_cmp);
+
+	an_qsort_doubles(s->points, s->n);
+
 	return (s);
 }
 
