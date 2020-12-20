@@ -165,7 +165,7 @@ AddPoint(struct dataset *ds, double a)
 
 	if (ds->n >= ds->lpoints) {
 		ds->lpoints *= 4;
-		ds->points = realloc(ds->points, sizeof *ds->points * ds->lpoints);
+		ds->points = realloc(ds->points, (ds->lpoints * sizeof *ds->points));
 	}
 
 	clock_gettime(CLOCK_MONOTONIC, &stop);
