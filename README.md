@@ -13,7 +13,9 @@ A small tool to do the statistics legwork on benchmarks etc.
 
 Written by Poul-Henning Kamp, lured into a dark Linux alley and clubbed over the head and hauled away to Github by yours truly.
 
-	perf record -F 99 -g ./ministat/ministat -q ./desktop.txt ./game.txt
+### generating a flamegraph
+
+	$ perf record -F 99 -g ./ministat/ministat -q ./desktop.txt ./game.txt
 	
 	Couldn't record kernel reference relocation symbol
 	Symbol resolution may be skewed if relocation was used (e.g. kexec).
@@ -32,10 +34,19 @@ Written by Poul-Henning Kamp, lured into a dark Linux alley and clubbed over the
 	[ perf record: Captured and wrote 0.089 MB perf.data (1275 samples) ]
 
 
+	$ perf script | ./ministat/FlameGraph/stackcollapse-perf.pl > out.perf-folded
+	[kernel.kallsyms] with build id cf4038e5f8e52a65ec13b1084be8dead7cf85258 not found, continuing without symbols
 
-## Perf
+	$ ./ministat/FlameGraph/flamegraph.pl out.perf-folded > perf-ministat.svg
+
+
 ### Flamegraph
 ![Flamegraph](perf-ministat.svg)
+
+	$ perf report --input=./perf.data -f
+
+![Flamegraph](perf-ministat.svg)
+
 
 ## Build & Install
 
