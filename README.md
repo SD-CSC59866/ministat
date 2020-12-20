@@ -52,12 +52,11 @@ The goal of this project was to try and use optimization techniques learned over
 ## Optimizations We Made
 
 1. Micro-optimizations
-We changed the way AddPoints inserted new data points by using realloc. 
 
-Realloc replaced calloc and memcpy so there's no need to spend time copying the new set of points.
+-[x] We changed the way AddPoints inserted new data points by using realloc. Realloc replaced calloc and memcpy so there's no need to spend time copying the new set of points.
 
-We replaced the usage of qsort with a variant of it, an_qsort, for a faster sorting algorithm for the data set.
+-[x] We replaced the usage of qsort with a variant of it, an_qsort, for a faster sorting algorithm for the data set.
 
-We tried to replace the C library function calls e.g. fclose, fopen with their system call variants open, close.
+-[x] We tried to replace the C library function calls e.g. fclose, fopen with their system call variants open, close.
 
 2. Multi-threaded architecture
