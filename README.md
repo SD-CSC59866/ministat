@@ -84,4 +84,6 @@ Optimize ministat to take advantage of modern CPU features and compiler optimiza
 
 #### 1) Multi-threading
 #### 2) Micro-optimizations
+- [ ] For the ReadSet function, we use open, read and close to instead fopen, fget and fclose. At addition, we use changed the tokenization (using strsep to instead strtok).
+- [ ] For the AddPoints function, we use reaclloc for data points. That will be reduct time to copy the new set for points.
 
