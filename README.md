@@ -41,11 +41,11 @@ Written by Poul-Henning Kamp, lured into a dark Linux alley and clubbed over the
 
 
 ### Flamegraph
-![Flamegraph](perf-ministat.svg)
+![Flamegraph](perf-report.svg)
 
 	$ perf report --input=./perf.data -f
 
-![Flamegraph](perf-ministat.svg)
+![Perf Report](perf-ministat.png)
 
 
 ## Build & Install
