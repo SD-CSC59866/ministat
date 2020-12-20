@@ -52,19 +52,6 @@ Optimize ministat to take advantage of modern CPU features and compiler optimiza
 ### Performance after Optimization
 
 	$ perf record -F 99 -g ./ministat/ministat -q ./desktop.txt ./game.txt
-	
-	Couldn't record kernel reference relocation symbol
-	Symbol resolution may be skewed if relocation was used (e.g. kexec).
-	Check /proc/kallsyms permission or run as root.
-	x ./desktop.txt
-	+ ./game.txt
-	    N           Min           Max        Median           Avg        Stddev
-	x 15863880             1 1.5813409e+09             4     76146.461     4043837.6
-	+ 19992880             1 1.6039039e+09           868     166282.14      15806022
-	Difference at 95.0% confidence
-		90135.7 +/- 7977.54
-		118.371% +/- 10.4766%
-		(Student's t, pooled s = 1.21051e+07)
 
 ### Flamegraph after optimizations
 
