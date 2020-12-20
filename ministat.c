@@ -1,12 +1,3 @@
-/*
- * ----------------------------------------------------------------------------
- * "THE BEER-WARE LICENSE" (Revision 42):
- * <phk@FreeBSD.ORG> wrote this file.  As long as you retain this notice you
- * can do whatever you want with this stuff. If we meet some day, and you think
- * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
- * ----------------------------------------------------------------------------
- *
- */
 #include <sys/ioctl.h>
 #include <limits.h>
 #include <err.h>
@@ -474,15 +465,17 @@ dbl_cmp(const void *a, const void *b)
 }
 
 static struct dataset *
-ReadSet(const char *n, int column, const char *delim)
+ReadSet(const char *n)
 {
 	int f;
-	char buf[6], *p, *t;
+	char buf[5], *p, *t;
 	struct dataset *s;
 	double d;
 	int line;
 	int i = 0;
 	int reading;
+	const char *delim = " \t";
+	int column = 1;
 
 	if (n == NULL)
 	{
@@ -509,7 +502,7 @@ ReadSet(const char *n, int column, const char *delim)
 	char *ret = buf;
 	char *pch;
 	//memchr(ret, '\n', sizeof(ret)) !
-	while ((reading = read(f, buf, sizeof(buf) - 1)) > 0)
+	while ((reading = read(f, buf, sizeof(buf))) > 0)
 	{
 		// if (buf[i - 1] == '\n')
 		// 	buf[i - 1] = '\0';
@@ -581,6 +574,7 @@ int main(int argc, char **argv)
 	int nds;
 	double a;
 	const char *delim = " \t";
+
 	char *p;
 	int c, i, ci;
 	int column = 1;
@@ -650,10 +644,11 @@ int main(int argc, char **argv)
 		ci = 2;
 	argc -= optind;
 	argv += optind;
+	pthread_t thread[argc];
 
 	if (argc == 0)
 	{
-		ds[0] = ReadSet("-", column, delim);
+		ds[0] = ReadSet("-");
 		nds = 1;
 	}
 	else
@@ -662,7 +657,7 @@ int main(int argc, char **argv)
 			usage("Too many datasets.");
 		nds = argc;
 		for (i = 0; i < nds; i++)
-			ds[i] = ReadSet(argv[i], column, delim);
+			ds[i] = ReadSet(argv[i]);
 	}
 
 	for (i = 0; i < nds; i++)
