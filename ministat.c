@@ -8,14 +8,14 @@
  *
  */
 #include <sys/ioctl.h>
-
+#include <limits.h>
 #include <err.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
+#include <fcntl.h>
 #include "queue.h"
 
 #define NSTUDENT 100
@@ -146,20 +146,27 @@ NewSet(void)
 	ds->points = calloc(sizeof *ds->points, ds->lpoints);
 	return (ds);
 }
-
 static void
 AddPoint(struct dataset *ds, double a)
 {
-	double *dp;
-
+	double *temp;
 	if (ds->n >= ds->lpoints)
 	{
-		dp = ds->points;
+
 		ds->lpoints *= 4;
-		ds->points = calloc(sizeof *ds->points, ds->lpoints);
-		memcpy(ds->points, dp, sizeof *dp * ds->n);
-		free(dp);
+
+		temp = realloc(ds->points, (ds->lpoints * sizeof *ds->points));
+		if (temp == NULL)
+		{
+			printf("Realloc failed...\n");
+			exit(0);
+		}
+		else
+		{
+			ds->points = temp;
+		}
 	}
+
 	ds->points[ds->n++] = a;
 	ds->sy += a;
 	ds->syy += a * a;
@@ -469,40 +476,43 @@ dbl_cmp(const void *a, const void *b)
 static struct dataset *
 ReadSet(const char *n, int column, const char *delim)
 {
-	FILE *f;
-	char buf[BUFSIZ], *p, *t;
+	int f;
+	char buf[6], *p, *t;
 	struct dataset *s;
 	double d;
 	int line;
-	int i;
+	int i = 0;
+	int reading;
 
 	if (n == NULL)
 	{
-		f = stdin;
+		f = STDIN_FILENO;
 		n = "<stdin>";
 	}
 	else if (!strcmp(n, "-"))
 	{
-		f = stdin;
+		f = STDIN_FILENO;
 		n = "<stdin>";
 	}
 	else
 	{
-		f = fopen(n, "r");
+		f = open(n, O_RDWR);
 	}
-	if (f == NULL)
+	if (f == -1)
 		err(1, "Cannot open %s", n);
+
 	s = NewSet();
 	s->name = strdup(n);
-	line = 0;
+	//line =
+	reading = read(f, buf, sizeof(buf));
 
-	while (fgets(buf, BUFSIZ, f) != NULL)
+	char *ret = buf;
+	char *pch;
+	//memchr(ret, '\n', sizeof(ret)) !
+	while ((reading = read(f, buf, sizeof(buf) - 1)) > 0)
 	{
-		line++;
-		i = strlen(buf);
-
-		if (buf[i - 1] == '\n')
-			buf[i - 1] = '\0';
+		// if (buf[i - 1] == '\n')
+		// 	buf[i - 1] = '\0';
 
 		char *ptr = strdup(buf); //duplicate of pointed to by buf
 		char *ptr_copy = ptr;	 //copy ptr, let strsep work on  prt_copy
@@ -510,27 +520,26 @@ ReadSet(const char *n, int column, const char *delim)
 			 t != NULL && *t != '#';
 			 i++, t = strsep(&ptr_copy, delim))
 		{
+
 			if (i == column)
 				break;
 		}
-		if (t == NULL || *t == '#')
-		{
-			continue;
-		}
 
-		d = strtod(t, &p);
-		if (p != NULL && *p != '\0')
-		{
-			err(2, "Invalid data on line %d in %s\n", line, n);
-		}
+		if (t == NULL || *t == '#')
+			continue;
+
+		d = atof(t);
+
+		//buf[0] != '\n' && buf[0] != '\0' && buf[0] != ' ' && buf[0] != '\t'
 		if (*buf != '\0')
 		{
 			AddPoint(s, d);
 		}
+
 		free(ptr); //strdup(ptr) is done dynamically using malloc, need free();
 	}
 
-	fclose(f);
+	close(f);
 	if (s->n < 3)
 	{
 		fprintf(stderr,
