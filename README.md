@@ -55,7 +55,7 @@ Optimize ministat to take advantage of modern CPU features and compiler optimiza
 
 ### Flamegraph after optimizations
 
-![]()
+![](Images/perf-ministat-before.svg)
 
 
 ### Perf Report after optimizations
@@ -68,7 +68,7 @@ Optimize ministat to take advantage of modern CPU features and compiler optimiza
 
 
 ### Steps we have taken in order to Optimize ministat
-![](Images/perf-report.png)
+
 
 #### 1) Micro-optimizations
 
