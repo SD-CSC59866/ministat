@@ -49,9 +49,6 @@ Optimize ministat to take advantage of modern CPU features and compiler optimiza
 ![](Images/perf-report-before.png)
 
 
-### Performance after Optimization
-
-	$ perf record -F 99 -g ./ministat/ministat -q ./desktop.txt ./game.txt
 
 ### Flamegraph after optimizations
 
@@ -63,7 +60,7 @@ Optimize ministat to take advantage of modern CPU features and compiler optimiza
 	$ perf report --input=./perf.data -f
 
 
-![]()
+![](Images/perf-report.png)
 
 
 
