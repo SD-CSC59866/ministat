@@ -69,8 +69,20 @@ Optimize ministat to take advantage of modern CPU features and compiler optimiza
 
 ### Steps we have taken in order to Optimize ministat
 
-#### 1) Multi-threading
-#### 2) Micro-optimizations
-- [ ] For the ReadSet function, we use open, read and close to instead fopen, fget and fclose. At addition, we use changed the tokenization (using strsep to instead strtok).
-- [ ] For the AddPoints function, we use reaclloc for data points. That will be reduce time to copy the new set for points.
+#### 1) Micro-optimizations
 
+- [x] We changed the way AddPoints inserted new data points by using realloc. Realloc replaced calloc and memcpy so there's no need to spend time copying the new set of points.
+
+- [x] We replaced the usage of qsort with a variant of it, an_qsort, for a faster sorting algorithm for the data set.
+
+- [x] For the ReadSet function, we use open, read and close to instead fopen, fget and fclose.
+
+- [x] We use changed the tokenization (using strsep to instead strtok).
+
+#### 2) Multi-threading
+
+- [ ] We attempted to create a multi-threaded architecture to split the work of ReadSet across multiple threads but were unsuccessful
+
+#### Conclusion
+
+ ministat originally wasn't the most optimized piece of software. However, the micro-optimizations we made to ministat were within realistic expectations. 
