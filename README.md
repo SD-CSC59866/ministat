@@ -68,6 +68,7 @@ Optimize ministat to take advantage of modern CPU features and compiler optimiza
 
 
 ### Steps we have taken in order to Optimize ministat
+![](Images/perf-report.svg)
 
 #### 1) Micro-optimizations
 
